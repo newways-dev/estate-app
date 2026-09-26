@@ -23,3 +23,6 @@
 
 **/.envrc
 **/.local/
+
+# original downloaded photos; optimized copies live in client/public/images/properties
+/photos/
