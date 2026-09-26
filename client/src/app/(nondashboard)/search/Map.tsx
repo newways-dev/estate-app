@@ -5,6 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { useAppSelector } from '@/state/redux'
 import { useGetPropertiesQuery } from '@/state/api'
 import { Property } from '@/types/prismaTypes'
+import { MAP_STYLE } from '@/lib/mapbox'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN as string
 
@@ -22,7 +23,7 @@ const Map = () => {
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current!,
-      style: 'mapbox://styles/katedev/cmc8ywb5h02wp01sdhh6t7h0b',
+      style: MAP_STYLE,
       center: filters.coordinates || [-74.5, 40],
       zoom: 9,
     })

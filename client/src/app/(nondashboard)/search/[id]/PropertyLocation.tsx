@@ -3,6 +3,7 @@ import { Compass, MapPin } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { MAP_STYLE } from '@/lib/mapbox'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN as string
 
@@ -15,7 +16,7 @@ const PropertyLocation = ({ propertyId }: PropertyDetailsProps) => {
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current!,
-      style: 'mapbox://styles/katedev/cmc8ywb5h02wp01sdhh6t7h0b',
+      style: MAP_STYLE,
       center: [
         property.location.coordinates.longitude,
         property.location.coordinates.latitude,
