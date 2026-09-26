@@ -1,10 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import jwt, { JwtPayload } from 'jsonwebtoken'
-
-interface DecodedToken extends JwtPayload {
-  sub: string
-  'custom:role'?: string
-}
+import { CognitoJwtVerifier } from 'aws-jwt-verify'
 
 declare global {
   namespace Express {
@@ -17,8 +12,29 @@ declare global {
   }
 }
 
+function createVerifier() {
+  const userPoolId = process.env.COGNITO_USER_POOL_ID
+  const clientId = process.env.COGNITO_CLIENT_ID
+
+  if (!userPoolId || !clientId) {
+    throw new Error('COGNITO_USER_POOL_ID and COGNITO_CLIENT_ID must be set')
+  }
+
+  return CognitoJwtVerifier.create({
+    userPoolId,
+    clientId,
+    tokenUse: 'id',
+  })
+}
+
+let verifier: ReturnType<typeof createVerifier> | undefined
+
 export const authMiddleware = (allowedRules: string[]) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     const token = req.headers.authorization?.split(' ')[1]
 
     if (!token) {
@@ -27,22 +43,22 @@ export const authMiddleware = (allowedRules: string[]) => {
     }
 
     try {
-      const decoded = jwt.decode(token) as DecodedToken
-      const userRole = decoded['custom:role'] || ''
+      verifier = verifier ?? createVerifier()
+      const payload = await verifier.verify(token)
+      const userRole = String(payload['custom:role'] ?? '')
+
       req.user = {
-        id: decoded.sub,
+        id: payload.sub,
         role: userRole,
       }
 
-      const hasAccess = allowedRules.includes(userRole.toLowerCase())
-
-      if (!hasAccess) {
+      if (!allowedRules.includes(userRole.toLowerCase())) {
         res.status(403).json({ message: 'Access denied' })
         return
       }
     } catch (error) {
-      console.error('Failed to decode token:', error)
-      res.status(400).json({ message: 'Invalid token' })
+      console.error('Failed to verify token:', error)
+      res.status(401).json({ message: 'Invalid token' })
       return
     }
 
